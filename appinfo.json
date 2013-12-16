@@ -9,12 +9,9 @@
     "watchface": false
   },
   "appKeys": {
-    "lat1": 1,
-    "lon1": 2,
-    "lat2": 3,
-    "lon2": 4,
-    "head": 5,
-    "dist": 6
+    "cmd":  1,
+    "head": 2,
+    "dist": 3
   },
   "resources": {
     "media": []
