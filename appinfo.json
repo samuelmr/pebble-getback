@@ -1,0 +1,22 @@
+{
+  "uuid": "89f5b6e9-f87b-4b69-9d4e-f9f88de2f848",
+  "shortName": "Get Back",
+  "longName": "Get Back to Where You Started From",
+  "companyName": "Samuel Rinnetmaki",
+  "versionCode": 1,
+  "versionLabel": "1.0.0",
+  "watchapp": {
+    "watchface": false
+  },
+  "appKeys": {
+    "lat1": 1,
+    "lon1": 2,
+    "lat2": 3,
+    "lon2": 4,
+    "head": 5,
+    "dist": 6
+  },
+  "resources": {
+    "media": []
+  }
+}
