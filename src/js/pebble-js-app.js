@@ -23,7 +23,7 @@ function appMessageNack(e) {
   console.log("Message rejected by Pebble! " + e.error);
 }
 
-var locationOptions = { "timeout": 15000, "maximumAge": 60000 }; 
+var locationOptions = { "timeout": 15000, "maximumAge": 15000, "enableHighAccuracy": true }; 
 
 function locationSuccess(position) {
   console.log("Got location " + position.coords.latitude + ',' + position.coords.longitude);
@@ -75,9 +75,9 @@ function calculate() {
     dist = R * c;
     console.log("Calculated dist " + dist);
     
-    var y = Math.sin(0 - dLon) * Math.cos(l1);
-    var x = Math.cos(l2)*Math.sin(l1) -
-            Math.sin(l2)*Math.cos(l1)*Math.cos(dLon);
+    var y = Math.sin(dLon) * Math.cos(l2);
+    var x = Math.cos(l1)*Math.sin(l2) -
+            Math.sin(l1)*Math.cos(l2)*Math.cos(dLon);
     head = Math.atan2(y, x).toDeg();
     console.log("Calculated head " + head);
     var msg = {"dist": parseInt(dist),
@@ -114,7 +114,7 @@ Pebble.addEventListener("ready", function(e) {
 });
 
 function storeCurrentPosition() {
-  var opts = { "timeout": 15000, "maximumAge": 1000 }; 
+  var opts = { "timeout": 15000, "maximumAge": 1000, "enableHighAccuracy": true }; 
   window.navigator.geolocation.getCurrentPosition(storeLocation, locationError, opts);
 }
 

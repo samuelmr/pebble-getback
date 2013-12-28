@@ -3,6 +3,7 @@
 static Window *window;
 static TextLayer *dist_layer;
 static TextLayer *unit_layer;
+static TextLayer *hint_layer;
 static Layer *head_layer;
 int32_t distance = 0;
 int16_t heading = 0;
@@ -21,7 +22,11 @@ const GPathInfo HEAD_PATH_POINTS = {
   }
 };
 
-static void click_handler(ClickRecognizerRef recognizer, void *context) {
+static void reset_handler(ClickRecognizerRef recognizer, void *context) {
+  if (hint_layer) {
+    text_layer_destroy(hint_layer);
+    hint_layer = NULL;
+  }
   DictionaryIterator *iter;
   app_message_outbox_begin(&iter);
   if (iter == NULL) {
@@ -33,6 +38,21 @@ static void click_handler(ClickRecognizerRef recognizer, void *context) {
   app_message_outbox_send();
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Sent command '%s' to phone! (%d bytes)", set_cmd, (int) final_size);
 }
+
+static void hint_handler(ClickRecognizerRef recognizer, void *context) {
+  if (hint_layer) {
+    text_layer_destroy(hint_layer);
+    hint_layer = NULL;
+  }
+  else {
+    Layer *window_layer = window_get_root_layer(window);
+    hint_layer = text_layer_create(GRect(10, 30, 124, 84));
+    text_layer_set_font(hint_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+    text_layer_set_text_alignment(hint_layer, GTextAlignmentCenter);
+    layer_add_child(window_layer, text_layer_get_layer(hint_layer));
+    text_layer_set_text(hint_layer, "Press and hold to set target to current position.");
+  }  
+}  
 
 void out_sent_handler(DictionaryIterator *sent, void *context) {
    // outgoing message was delivered
@@ -87,12 +107,12 @@ void in_dropped_handler(AppMessageResult reason, void *context) {
 }
  
 static void click_config_provider(void *context) {
-/*
-  window_single_click_subscribe(BUTTON_ID_SELECT, click_handler);
-  window_single_click_subscribe(BUTTON_ID_UP, click_handler);
-  window_single_click_subscribe(BUTTON_ID_DOWN, click_handler);
-*/
-  window_long_click_subscribe(BUTTON_ID_SELECT, 0, click_handler, NULL);
+  window_single_click_subscribe(BUTTON_ID_SELECT, hint_handler);
+  window_single_click_subscribe(BUTTON_ID_UP, hint_handler);
+  window_single_click_subscribe(BUTTON_ID_DOWN, hint_handler);
+  window_long_click_subscribe(BUTTON_ID_SELECT, 0, reset_handler, NULL);
+  window_long_click_subscribe(BUTTON_ID_UP, 0, reset_handler, NULL);
+  window_long_click_subscribe(BUTTON_ID_DOWN, 0, reset_handler, NULL);
 }
 
 static void window_load(Window *window) {
@@ -122,6 +142,9 @@ static void window_unload(Window *window) {
   text_layer_destroy(unit_layer);
   text_layer_destroy(dist_layer);
   layer_destroy(head_layer);
+  if (hint_layer) {
+    text_layer_destroy(hint_layer);
+  }
 }
 
 static void init(void) {
