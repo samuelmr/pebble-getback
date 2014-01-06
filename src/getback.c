@@ -15,6 +15,7 @@ static const uint32_t CMD_KEY = 0x1;
 static const uint32_t HEAD_KEY = 0x2;
 static const uint32_t DIST_KEY = 0x3;
 static const char *set_cmd = "set";
+static const char *quit_cmd = "quit";
 static GPath *head_path;
 
 const GPathInfo HEAD_PATH_POINTS = {
@@ -206,6 +207,17 @@ static void init(void) {
 }
 
 static void deinit(void) {
+  DictionaryIterator *iter;
+  app_message_outbox_begin(&iter);
+  if (iter == NULL) {
+    APP_LOG(APP_LOG_LEVEL_WARNING, "Can not send quit command to phone!");
+    return;
+  }
+  dict_write_cstring(iter, CMD_KEY, quit_cmd);
+  const uint32_t final_size = dict_write_end(iter);
+  app_message_outbox_send();
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Sent command '%s' to phone! (%d bytes)", quit_cmd, (int) final_size);
+
   window_destroy(window);
 }
 

@@ -7,7 +7,6 @@ var lon2 = parseFloat(localStorage.getItem("lon2"));
 var head = 0;
 var dist = 0;
 var R = 6371000; // m
-var active = false;
 var locationWatcher;
 
 function sendMessage(dict) {
@@ -144,62 +143,22 @@ Pebble.addEventListener("deviceorientation", function(event) {
 
 Pebble.addEventListener("appmessage",
   function(e) {
-/*
-    if (active) {
-      console.log("Active, assuming command 'clear': " + e.payload.cmd);      
-      lat2 = 0;
-      lon2 = 0;
-      active = false;
+    if (e && e.payload && e.payload.cmd) {
+      console.log("Got command: " + e.payload.cmd);
+      switch (e.payload.cmd) {
+        case 'set':
+          storeCurrentPosition();
+          break;
+        case 'clear':
+          lat2 = null;
+          lon2 = null;
+          break;
+        case 'quit':
+          window.navigator.geolocation.clearWatch(locationWatcher);
+          break;
+        default:
+          console.log("Unknown command!");
+      }      
     }
-    else {
-*/
-      console.log("Not active, assuming command 'set': " + e.payload.cmd);
-      storeCurrentPosition();
-/*
-      active = true;
-    }
-*/
-    // startWatcher();
-/*
-    for (var i in e) {
-      console.log(i + ': ' + e[i] + ' (' + typeof(e[i]) + ')');
-      if (i == 'payload') {
-        console.log('keys for e[' + i + ']: ' + Object.keys(e[i]).length);
-        for (var j in Object.keys(e[i])) {
-          console.log('e[' + i + '][' + j + ']: ' + e[i][j]);
-        }
-      }
-      for (var j in e[i]) {
-        console.log('e[' + i + '][' + j + ']: ' + e[i][j]);
-      }
-    }
-    console.log("Received head: " + e.payload.head);
-    console.log("Received index: " + e.payload.cmd);
-    console.log("Received command: " + e.payload["1"]);
-    // console.log("Received one: " + e.payload.1);
-    console.log("Received one: " + e.payload[1]);
-    console.log("Received data: " + e.data.cmd);      
-    if (e.payload.cmd) {
-      console.log("Received command: " + e.payload.cmd);      
-    }
-    if (e.payload["cmd"]) {
-      console.log("Received command: " + e.payload["cmd"]);
-      var opts = { "timeout": 15000, "maximumAge": 1000 }; 
-      window.navigator.geolocation.getCurrentPosition(storeLocation, locationError, opts);
-    }
-    else if (e.payload["cmd"] && (e.payload["cmd"] == "clear")) {
-      console.log("Received command: " + e.payload["cmd"]);
-      lat2 = 0;
-      lon2 = 0;
-    }
-    else {
-      var txt = '(' + typeof(e.payload) + ') ';
-      for (var i in e.payload) {
-        txt += i + ': ' + e.payload[i] + "\n";
-      }
-      console.log("Received unknown message with " + e.payload.length + " items: " + txt);
-    }
-    calculate();
-*/
   }
 );
