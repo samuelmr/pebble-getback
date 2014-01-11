@@ -70,7 +70,7 @@ void in_received_handler(DictionaryIterator *iter, void *context) {
   Tuple *head_tuple = dict_find(iter, HEAD_KEY);
   if (head_tuple) {
     heading = head_tuple->value->int16;
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Updated heading to %d", (int) heading);
+    // APP_LOG(APP_LOG_LEVEL_DEBUG, "Updated heading to %d", (int) heading);
     layer_mark_dirty(head_layer);
   }
   Tuple *dist_tuple = dict_find(iter, DIST_KEY);
@@ -86,12 +86,12 @@ void in_received_handler(DictionaryIterator *iter, void *context) {
   snprintf(dist_text, sizeof(dist_text), "%d", (int) distance);
   text_layer_set_text(dist_layer, dist_text);
   text_layer_set_text(unit_layer, unit_text);
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Distance updated: %d %s", (int) distance, unit_text);
+  // APP_LOG(APP_LOG_LEVEL_DEBUG, "Distance updated: %d %s", (int) distance, unit_text);
 }
 
 static void head_layer_update_callback(Layer *layer, GContext *ctx) {
   gpath_rotate_to(head_path, (TRIG_MAX_ANGLE / 360) * heading);
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Rotated heading layer by %d degrees", heading);
+  // APP_LOG(APP_LOG_LEVEL_DEBUG, "Rotated heading layer by %d degrees", heading);
   GRect l_bounds = layer_get_bounds(layer);
   GPoint center = grect_center_point(&l_bounds);
   graphics_context_set_fill_color(ctx, GColorBlack);
