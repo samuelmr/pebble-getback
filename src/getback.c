@@ -5,19 +5,24 @@ static TextLayer *dist_layer;
 static TextLayer *unit_layer;
 static TextLayer *hint_layer;
 static Layer *head_layer;
+static TextLayer *n_layer;
+static TextLayer *e_layer;
+static TextLayer *s_layer;
+static TextLayer *w_layer;
 int32_t distance = 0;
 int16_t heading = 0;
 static const uint32_t CMD_KEY = 0x1;
 static const uint32_t HEAD_KEY = 0x2;
 static const uint32_t DIST_KEY = 0x3;
 static const char *set_cmd = "set";
+static const char *quit_cmd = "quit";
 static GPath *head_path;
 
 const GPathInfo HEAD_PATH_POINTS = {
   3,
   (GPoint []) {
     {0, 0},
-    {-8, -80}, // 80 = radius + fudge; 8 = 80*tan(6 degrees); 6 degrees per minute;
+    {-8, -80}, // 80 = radius + fudge; 8 = 80*tan(6 degrees); 6 degrees/minute;
     {8,  -80},
   }
 };
@@ -74,19 +79,18 @@ void in_received_handler(DictionaryIterator *iter, void *context) {
     layer_mark_dirty(head_layer);
   }
   Tuple *dist_tuple = dict_find(iter, DIST_KEY);
-  static char unit_text[3] = "m";
+  text_layer_set_text(unit_layer, "m");
   if (dist_tuple) {
     distance = dist_tuple->value->int32;
     if (distance > 2900) {
       distance = (int) (distance / 1000);
-      strcpy(unit_text, "km");
+      text_layer_set_text(unit_layer, "km");
     }
   }
   static char dist_text[9];
   snprintf(dist_text, sizeof(dist_text), "%d", (int) distance);
   text_layer_set_text(dist_layer, dist_text);
-  text_layer_set_text(unit_layer, unit_text);
-  // APP_LOG(APP_LOG_LEVEL_DEBUG, "Distance updated: %d %s", (int) distance, unit_text);
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Distance updated: %d %s", (int) distance, text_layer_get_text(unit_layer));
 }
 
 static void head_layer_update_callback(Layer *layer, GContext *ctx) {
@@ -122,6 +126,39 @@ static void window_load(Window *window) {
   head_layer = layer_create(bounds);
   layer_set_update_proc(head_layer, head_layer_update_callback);
   layer_add_child(window_layer, head_layer);
+
+  n_layer = text_layer_create(GRect(63, 1, 18, 18));
+  text_layer_set_background_color(n_layer, GColorBlack);
+  text_layer_set_text_color(n_layer, GColorWhite);
+  text_layer_set_font(n_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+  text_layer_set_text_alignment(n_layer, GTextAlignmentCenter);
+  text_layer_set_text(n_layer, "N");
+  layer_add_child(head_layer, (Layer *) n_layer);
+
+  e_layer = text_layer_create(GRect(125, 62, 20, 18));
+  text_layer_set_background_color(e_layer, GColorBlack);
+  text_layer_set_text_color(e_layer, GColorWhite);
+  text_layer_set_font(e_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+  text_layer_set_text_alignment(e_layer, GTextAlignmentCenter);
+  text_layer_set_text(e_layer, "E");
+  layer_add_child(head_layer, (Layer *) e_layer);
+
+  s_layer = text_layer_create(GRect(63, 129, 18, 18));
+  text_layer_set_background_color(s_layer, GColorBlack);
+  text_layer_set_text_color(s_layer, GColorWhite);
+  text_layer_set_font(s_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+  text_layer_set_text_alignment(s_layer, GTextAlignmentCenter);
+  text_layer_set_text(s_layer, "S");
+  layer_add_child(head_layer, (Layer *) s_layer);
+
+  w_layer = text_layer_create(GRect(1, 63, 18, 18));
+  text_layer_set_background_color(w_layer, GColorBlack);
+  text_layer_set_text_color(w_layer, GColorWhite);
+  text_layer_set_font(w_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+  text_layer_set_text_alignment(w_layer, GTextAlignmentCenter);
+  text_layer_set_text(w_layer, "W");
+  layer_add_child(head_layer, (Layer *) w_layer);
+
   head_path = gpath_create(&HEAD_PATH_POINTS);
   gpath_move_to(head_path, grect_center_point(&bounds));
 
@@ -141,6 +178,10 @@ static void window_load(Window *window) {
 static void window_unload(Window *window) {
   text_layer_destroy(unit_layer);
   text_layer_destroy(dist_layer);
+  text_layer_destroy(w_layer);
+  text_layer_destroy(s_layer);
+  text_layer_destroy(e_layer);
+  text_layer_destroy(n_layer);
   layer_destroy(head_layer);
   if (hint_layer) {
     text_layer_destroy(hint_layer);
@@ -166,6 +207,17 @@ static void init(void) {
 }
 
 static void deinit(void) {
+  DictionaryIterator *iter;
+  app_message_outbox_begin(&iter);
+  if (iter == NULL) {
+    APP_LOG(APP_LOG_LEVEL_WARNING, "Can not send quit command to phone!");
+    return;
+  }
+  dict_write_cstring(iter, CMD_KEY, quit_cmd);
+  const uint32_t final_size = dict_write_end(iter);
+  app_message_outbox_send();
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Sent command '%s' to phone! (%d bytes)", quit_cmd, (int) final_size);
+
   window_destroy(window);
 }
 
