@@ -3,6 +3,10 @@ pebble-getback
 
 Get back to where you started from.
 
+<a href="http://pblweb.com/appstore/52cae46a6126ce093f000064" title="Get Back on the Pebble appstore">
+  <img src="http://pblweb.com/badge/52cae46a6126ce093f000064/black/large/" />
+</a>
+
 Usage
 -----
 
