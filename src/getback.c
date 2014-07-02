@@ -11,6 +11,7 @@ static TextLayer *s_layer;
 static TextLayer *w_layer;
 int32_t distance = 0;
 int16_t heading = 0;
+int16_t orientation = (TRIG_MAX_ANGLE / 360) * 0;
 static const uint32_t CMD_KEY = 0x1;
 static const uint32_t HEAD_KEY = 0x2;
 static const uint32_t DIST_KEY = 0x3;
@@ -62,6 +63,13 @@ static void hint_handler(ClickRecognizerRef recognizer, void *context) {
 void out_sent_handler(DictionaryIterator *sent, void *context) {
    // outgoing message was delivered
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Message accepted by phone!");
+  Layer *window_layer = window_get_root_layer(window);
+  hint_layer = text_layer_create(GRect(10, 30, 124, 84));
+  text_layer_set_font(hint_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+  text_layer_set_text_alignment(hint_layer, GTextAlignmentCenter);
+  layer_add_child(window_layer, text_layer_get_layer(hint_layer));
+  text_layer_set_text(hint_layer, "Target set. Press again to continue.");
+  vibes_short_pulse();
 }
 
 void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, void *context) {
@@ -92,10 +100,13 @@ void in_received_handler(DictionaryIterator *iter, void *context) {
   text_layer_set_text(dist_layer, dist_text);
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Distance updated: %d %s", (int) distance, text_layer_get_text(unit_layer));
 }
-
+// void compass_heading_handler(CompassHeadingData heading_data){
+//  orientation = heading_data.magnetic_heading;
+//  layer_mark_dirty(head_layer);
+// }
 static void head_layer_update_callback(Layer *layer, GContext *ctx) {
-  gpath_rotate_to(head_path, (TRIG_MAX_ANGLE / 360) * heading);
-  // APP_LOG(APP_LOG_LEVEL_DEBUG, "Rotated heading layer by %d degrees", heading);
+  gpath_rotate_to(head_path, (TRIG_MAX_ANGLE / 360) * heading - orientation);
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Rotated heading layer by %d degrees (orientation %d)", heading, orientation);
   GRect l_bounds = layer_get_bounds(layer);
   GPoint center = grect_center_point(&l_bounds);
   graphics_context_set_fill_color(ctx, GColorBlack);
