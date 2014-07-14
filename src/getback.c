@@ -18,6 +18,7 @@ static const uint32_t DIST_KEY = 0x3;
 static const char *set_cmd = "set";
 static const char *quit_cmd = "quit";
 static GPath *head_path;
+static GRect hint_layer_size;
 
 const GPathInfo HEAD_PATH_POINTS = {
   3,
@@ -29,6 +30,7 @@ const GPathInfo HEAD_PATH_POINTS = {
 };
 
 static void reset_handler(ClickRecognizerRef recognizer, void *context) {
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Reset");
   if (hint_layer) {
     text_layer_destroy(hint_layer);
     hint_layer = NULL;
@@ -52,7 +54,7 @@ static void hint_handler(ClickRecognizerRef recognizer, void *context) {
   }
   else {
     Layer *window_layer = window_get_root_layer(window);
-    hint_layer = text_layer_create(GRect(10, 30, 124, 84));
+    hint_layer = text_layer_create(hint_layer_size);
     text_layer_set_font(hint_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
     text_layer_set_text_alignment(hint_layer, GTextAlignmentCenter);
     layer_add_child(window_layer, text_layer_get_layer(hint_layer));
@@ -64,7 +66,7 @@ void out_sent_handler(DictionaryIterator *sent, void *context) {
    // outgoing message was delivered
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Message accepted by phone!");
   Layer *window_layer = window_get_root_layer(window);
-  hint_layer = text_layer_create(GRect(10, 30, 124, 84));
+  hint_layer = text_layer_create(hint_layer_size);
   text_layer_set_font(hint_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
   text_layer_set_text_alignment(hint_layer, GTextAlignmentCenter);
   layer_add_child(window_layer, text_layer_get_layer(hint_layer));
@@ -75,6 +77,14 @@ void out_sent_handler(DictionaryIterator *sent, void *context) {
 void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, void *context) {
    // outgoing message failed
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Message rejected by phone: %d", reason);
+  if (reason == APP_MSG_SEND_TIMEOUT) {
+    Layer *window_layer = window_get_root_layer(window);
+    hint_layer = text_layer_create(hint_layer_size);
+    text_layer_set_font(hint_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+    text_layer_set_text_alignment(hint_layer, GTextAlignmentCenter);
+    layer_add_child(window_layer, text_layer_get_layer(hint_layer));
+    text_layer_set_text(hint_layer, "Cannot set target. Restart the app.");
+  }
 }
 
 void in_received_handler(DictionaryIterator *iter, void *context) {
@@ -83,7 +93,7 @@ void in_received_handler(DictionaryIterator *iter, void *context) {
   Tuple *head_tuple = dict_find(iter, HEAD_KEY);
   if (head_tuple) {
     heading = head_tuple->value->int16;
-    // APP_LOG(APP_LOG_LEVEL_DEBUG, "Updated heading to %d", (int) heading);
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Updated heading to %d", (int) heading);
     layer_mark_dirty(head_layer);
   }
   Tuple *dist_tuple = dict_find(iter, DIST_KEY);
@@ -204,8 +214,9 @@ static void init(void) {
   app_message_register_inbox_dropped(in_dropped_handler);
   app_message_register_outbox_sent(out_sent_handler);
   app_message_register_outbox_failed(out_failed_handler);
-  const uint32_t inbound_size = 128;
-  const uint32_t outbound_size = 128;
+  hint_layer_size = GRect(10, 30, 124, 84);
+  const uint32_t inbound_size = APP_MESSAGE_INBOX_SIZE_MINIMUM;
+  const uint32_t outbound_size = APP_MESSAGE_OUTBOX_SIZE_MINIMUM;
   app_message_open(inbound_size, outbound_size);
   window = window_create();
   window_set_click_config_provider(window, click_config_provider);
