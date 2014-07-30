@@ -15,10 +15,13 @@ int16_t orientation = (TRIG_MAX_ANGLE / 360) * 0;
 static const uint32_t CMD_KEY = 0x1;
 static const uint32_t HEAD_KEY = 0x2;
 static const uint32_t DIST_KEY = 0x3;
+static const uint32_t UNITS_KEY = 0x4;
 static const char *set_cmd = "set";
 static const char *quit_cmd = "quit";
 static GPath *head_path;
 static GRect hint_layer_size;
+static const double YARD_LENGTH = 0.9144;
+static const double YARDS_IN_MILE = 1.760;
 
 const GPathInfo HEAD_PATH_POINTS = {
   3,
@@ -90,19 +93,37 @@ void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, voi
 void in_received_handler(DictionaryIterator *iter, void *context) {
   // incoming message received
   // Check for fields you expect to receive
+  static char units[9];
   Tuple *head_tuple = dict_find(iter, HEAD_KEY);
   if (head_tuple) {
     heading = head_tuple->value->int16;
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Updated heading to %d", (int) heading);
     layer_mark_dirty(head_layer);
   }
+  Tuple *units_tuple = dict_find(iter, UNITS_KEY);
+  if (units_tuple) {
+    strcpy(units, units_tuple->value->cstring);
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Units: %s", units);
+  }
   Tuple *dist_tuple = dict_find(iter, DIST_KEY);
-  text_layer_set_text(unit_layer, "m");
   if (dist_tuple) {
     distance = dist_tuple->value->int32;
+    if (strcmp(units, "metric")) {
+      text_layer_set_text(unit_layer, "m");
+    }
+    else {
+      text_layer_set_text(unit_layer, "yd");
+      distance = distance * YARD_LENGTH;
+    }
     if (distance > 2900) {
-      distance = (int) (distance / 1000);
-      text_layer_set_text(unit_layer, "km");
+      if (strcmp(units, "metric")) {
+        distance = (int) (distance / 1000);
+        text_layer_set_text(unit_layer, "km");
+      }
+      else {
+        distance = (int) (distance / YARDS_IN_MILE);
+        text_layer_set_text(unit_layer, "mi");
+      }
     }
   }
   static char dist_text[9];

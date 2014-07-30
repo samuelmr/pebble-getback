@@ -6,14 +6,15 @@
   "versionCode": 1.4,
   "versionLabel": "1.4.0",
   "projectType": "native",
-  "capabilities": ["location"],
+  "capabilities": ["location", "configurable"],
   "watchapp": {
     "watchface": false
   },
   "appKeys": {
     "cmd":  1,
     "head": 2,
-    "dist": 3
+    "dist": 3,
+    "units": 4
   },
   "resources": {
     "media": [

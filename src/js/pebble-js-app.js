@@ -6,9 +6,11 @@ var lat2;
 var lon2;
 var head = 0;
 var dist = 0;
+var units = "metric";
 var R = 6371000; // m
 var locationWatcher;
 var locationOptions = {timeout: 15000, maximumAge: 15000, enableHighAccuracy: true };
+var setPebbleToken = "JG36";
 
 Pebble.addEventListener("ready", function(e) {
   if (typeof(Number.prototype.toRad) === "undefined") {
@@ -23,6 +25,7 @@ Pebble.addEventListener("ready", function(e) {
   }
   lat2 = parseFloat(localStorage.getItem("lat2")) || null;
   lon2 = parseFloat(localStorage.getItem("lon2")) || null;
+  units = localStorage.getItem("units") || "metric";
   if ((lat2 === null) && (lon2 === null)) {
     storeCurrentPosition();
   }
@@ -54,6 +57,23 @@ Pebble.addEventListener("appmessage",
           console.log("Unknown command!");
       }
     }
+  }
+);
+
+Pebble.addEventListener("showConfiguration",
+  function() {
+    var uri = "http://x.setpebble.com/api/" + setPebbleToken + "/" + Pebble.getAccountToken();
+    console.log("Configuration url: " + uri);
+    Pebble.openURL(uri);
+  }
+);
+
+Pebble.addEventListener("webviewclosed",
+  function(e) {
+    var options = JSON.parse(decodeURIComponent(e.response));
+    console.log("Webview window returned: " + JSON.stringify(options));
+    var units = options["Units"];
+    localStorage.setItem("units", units);
   }
 );
 
@@ -126,7 +146,8 @@ function calculate() {
     head = Math.round(Math.atan2(y, x).toDeg());
     console.log("Calculated head " + head);
     var msg = {"dist": dist,
-               "head": head};
+               "head": head,
+               "units": units};
     sendMessage(msg);
   }
   else {
