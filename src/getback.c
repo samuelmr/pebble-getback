@@ -108,7 +108,7 @@ void in_received_handler(DictionaryIterator *iter, void *context) {
   Tuple *dist_tuple = dict_find(iter, DIST_KEY);
   if (dist_tuple) {
     distance = dist_tuple->value->int32;
-    if (strcmp(units, "metric")) {
+    if (strcmp(units, "metric") == 0) {
       text_layer_set_text(unit_layer, "m");
     }
     else {
@@ -116,7 +116,7 @@ void in_received_handler(DictionaryIterator *iter, void *context) {
       distance = distance * YARD_LENGTH;
     }
     if (distance > 2900) {
-      if (strcmp(units, "metric")) {
+      if (strcmp(units, "metric") == 0) {
         distance = (int) (distance / 1000);
         text_layer_set_text(unit_layer, "km");
       }
