@@ -62,7 +62,7 @@ Pebble.addEventListener("appmessage",
 
 Pebble.addEventListener("showConfiguration",
   function() {
-    var uri = "http://x.setpebble.com/api/" + setPebbleToken + "/" + Pebble.getAccountToken();
+    var uri = "http://x.setpebble.com/" + setPebbleToken + "/" + Pebble.getAccountToken();
     console.log("Configuration url: " + uri);
     Pebble.openURL(uri);
   }
@@ -72,7 +72,8 @@ Pebble.addEventListener("webviewclosed",
   function(e) {
     var options = JSON.parse(decodeURIComponent(e.response));
     console.log("Webview window returned: " + JSON.stringify(options));
-    var units = options["Units"];
+    units = (options["1"] == 1) ? 'imperial' : 'metric';
+    console.log("Units set to: " + units);
     localStorage.setItem("units", units);
   }
 );
