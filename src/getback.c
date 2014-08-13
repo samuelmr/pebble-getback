@@ -21,7 +21,7 @@ static const char *quit_cmd = "quit";
 static GPath *head_path;
 static GRect hint_layer_size;
 static const double YARD_LENGTH = 0.9144;
-static const double YARDS_IN_MILE = 1.760;
+static const double YARDS_IN_MILE = 1760;
 
 const GPathInfo HEAD_PATH_POINTS = {
   3,
@@ -113,7 +113,7 @@ void in_received_handler(DictionaryIterator *iter, void *context) {
     }
     else {
       text_layer_set_text(unit_layer, "yd");
-      distance = distance * YARD_LENGTH;
+      distance = distance / YARD_LENGTH;
     }
     if (distance > 2900) {
       if (strcmp(units, "metric") == 0) {

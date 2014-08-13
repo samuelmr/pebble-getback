@@ -9,7 +9,7 @@ var dist = 0;
 var units = "metric";
 var R = 6371000; // m
 var locationWatcher;
-var locationOptions = {timeout: 15000, maximumAge: 15000, enableHighAccuracy: true };
+var locationOptions = {timeout: 15000, maximumAge: 1000, enableHighAccuracy: true };
 var setPebbleToken = "JG36";
 
 Pebble.addEventListener("ready", function(e) {
@@ -72,7 +72,7 @@ Pebble.addEventListener("webviewclosed",
   function(e) {
     var options = JSON.parse(decodeURIComponent(e.response));
     console.log("Webview window returned: " + JSON.stringify(options));
-    units = (options["1"] == 1) ? 'imperial' : 'metric';
+    units = (options["1"] === 1) ? 'imperial' : 'metric';
     console.log("Units set to: " + units);
     localStorage.setItem("units", units);
   }
@@ -107,15 +107,17 @@ function storeLocation(position) {
   calculate();
 }
 
-function calculate() {  
+function calculate() {
+  var msg;
   if (lat2 || lon2) {
     if ((Math.round(lat2*divider) == Math.round(lat1*divider)) && 
         (Math.round(lon2*divider) == Math.round(lon1*divider))) {
       console.log("Not moved yet, still at  " + lat1 + ',' + lon1);
       dist = 0;
       head = 0;
-      var msg = {"dist": parseInt(dist),
-                 "head": parseInt(head)};
+      msg = {"dist": parseInt(dist),
+             "head": parseInt(head),
+             "units": units};
       sendMessage(msg);
       return;
     }
@@ -146,9 +148,9 @@ function calculate() {
             Math.sin(l1)*Math.cos(l2)*Math.cos(dLon);
     head = Math.round(Math.atan2(y, x).toDeg());
     console.log("Calculated head " + head);
-    var msg = {"dist": dist,
-               "head": head,
-               "units": units};
+    msg = {"dist": dist,
+           "head": head,
+           "units": units};
     sendMessage(msg);
   }
   else {
@@ -166,21 +168,26 @@ function storeCurrentPosition() {
   navigator.geolocation.getCurrentPosition(storeLocation, locationError, opts);
 }
 
-function startWatcher() {
+function startWatcher() {  
   if (!locationWatcher) {
-   locationWatcher = navigator.geolocation.watchPosition(locationSuccess, locationError, locationOptions);
-   // for testing: randomize movement!
+    // watchPosition doesn't work in iOS
+    // locationWatcher = navigator.geolocation.watchPosition(locationSuccess, locationError, locationOptions);
+    // navigator.geolocation.getCurrentPosition(locationSuccess, locationError, locationOptions);
+    locationWatcher = setInterval(function() {
+      navigator.geolocation.getCurrentPosition(locationSuccess, locationError, locationOptions);
+    }, 2000);
+    // for testing: randomize movement!
 /*
-   window.navigator.geolocation.getCurrentPosition(locationSuccess, locationError, locationOptions);
-   locationWatcher = window.setInterval(function() {
-    lat1 = lat1 + Math.random()/100;
-    lon1 = lon1 - Math.random()/100;
-    calculate();
-   }, 5000);
-   console.log("Started location watcher: " + locationWatcher);
+    window.navigator.geolocation.getCurrentPosition(locationSuccess, locationError, locationOptions);
+    locationWatcher = window.setInterval(function() {
+      lat1 = lat1 + Math.random()/100;
+      lon1 = lon1 - Math.random()/100;
+      calculate();
+    }, 5000);
+    console.log("Started location watcher: " + locationWatcher);
 */
   }
   else {
-   console.log("Location watcher already running: " + locationWatcher);
+    console.log("Location watcher already running: " + locationWatcher);
   }
 }
