@@ -10,7 +10,7 @@
         "configurable"
     ],
     "companyName": "Samuel Rinnetmaki",
-    "longName": "Get Back to Where You Started From",
+    "longName": "Back to target",
     "projectType": "native",
     "resources": {
         "media": [
@@ -25,7 +25,7 @@
     "shortName": "Get Back",
     "uuid": "89f5b6e9-f87b-4b69-9d4e-f9f88de2f848",
     "versionCode": 1,
-    "versionLabel": "1.5",
+    "versionLabel": "2.0",
     "watchapp": {
         "watchface": false
     }
