@@ -9,8 +9,8 @@
         "location",
         "configurable"
     ],
-    "companyName": "Samuel Rinnetmaki",
-    "longName": "Back to target",
+    "companyName": "Samuel Rinnetm\u00e4ki",
+    "longName": "Get Back",
     "projectType": "native",
     "resources": {
         "media": [
@@ -25,7 +25,7 @@
     "shortName": "Get Back",
     "uuid": "89f5b6e9-f87b-4b69-9d4e-f9f88de2f848",
     "versionCode": 1,
-    "versionLabel": "2.0",
+    "versionLabel": "2.2",
     "watchapp": {
         "watchface": false
     }

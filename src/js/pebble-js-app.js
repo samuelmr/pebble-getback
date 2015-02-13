@@ -18,12 +18,12 @@ Pebble.addEventListener("ready", function(e) {
   if (typeof(Number.prototype.toRad) === "undefined") {
     Number.prototype.toRad = function() {
       return this * Math.PI / 180;
-    }
+    };
   }
   if (typeof(Number.prototype.toDeg) === "undefined") {
      Number.prototype.toDeg = function() {
       return this * 180 / Math.PI;
-     }
+     };
   }
   lat2 = parseFloat(localStorage.getItem("lat2")) || null;
   lon2 = parseFloat(localStorage.getItem("lon2")) || null;

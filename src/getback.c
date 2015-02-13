@@ -10,7 +10,7 @@ static TextLayer *e_layer;
 static TextLayer *s_layer;
 static TextLayer *w_layer;
 static TextLayer *calib_layer;
-int16_t distance = 0;
+int32_t distance = 0;
 int16_t heading = 0;
 int16_t orientation = 0;
 static const uint32_t CMD_KEY = 0x1;
