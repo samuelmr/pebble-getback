@@ -15,16 +15,6 @@ var locationOptions = {timeout: 15000, maximumAge: 1000, enableHighAccuracy: tru
 var setPebbleToken = "DY3U";
 
 Pebble.addEventListener("ready", function(e) {
-  if (typeof(Number.prototype.toRad) === "undefined") {
-    Number.prototype.toRad = function() {
-      return this * Math.PI / 180;
-    };
-  }
-  if (typeof(Number.prototype.toDeg) === "undefined") {
-     Number.prototype.toDeg = function() {
-      return this * 180 / Math.PI;
-     };
-  }
   lat2 = parseFloat(localStorage.getItem("lat2")) || null;
   lon2 = parseFloat(localStorage.getItem("lon2")) || null;
   interval = parseInt(localStorage.getItem("interval")) || 0;
@@ -33,7 +23,7 @@ Pebble.addEventListener("ready", function(e) {
     storeCurrentPosition();
   }
   else {
-    console.log("Target location known:" + lon2 + ',' + lat2);
+    // console.log("Target location known:" + lon2 + ',' + lat2);
   }
   startWatcher();
   // console.log(e.type);
@@ -100,7 +90,7 @@ function appMessageNack(e) {
 }
 
 function locationSuccess(position) {
-  console.log("Got location " + position.coords.latitude + ',' + position.coords.longitude + ', heading at ' + position.coords.heading);
+  // console.log("Got location " + position.coords.latitude + ',' + position.coords.longitude + ', heading at ' + position.coords.heading);
   lat1 = position.coords.latitude;
   lon1 = position.coords.longitude;
   calculate();
@@ -111,7 +101,7 @@ function storeLocation(position) {
   lon2 = position.coords.longitude;
   localStorage.setItem("lat2", lat2);
   localStorage.setItem("lon2", lon2);
-  console.log("Stored location " + position.coords.latitude + ',' + position.coords.longitude);
+  // console.log("Stored location " + position.coords.latitude + ',' + position.coords.longitude);
   calculate();
 }
 
@@ -120,7 +110,7 @@ function calculate() {
   if (lat2 || lon2) {
     if ((Math.round(lat2*divider) == Math.round(lat1*divider)) && 
         (Math.round(lon2*divider) == Math.round(lon1*divider))) {
-      console.log("Not moved yet, still at  " + lat1 + ',' + lon1);
+      // console.log("Not moved yet, still at  " + lat1 + ',' + lon1);
       dist = 0;
       head = 0;
       msg = {"dist": dist,
@@ -136,33 +126,33 @@ function calculate() {
     if (!lon2) {
       lon2 = 0;
     }
-    console.log("Found stored point " + lat2 + ',' + lon2);
-    var dLat = (lat2-lat1).toRad();
-    console.log("Latitude difference (radians): " + dLat);
-    var dLon = (lon2-lon1).toRad();
-    console.log("Longitude difference (radians): " + dLon);
-    var l1 = lat1.toRad();
-    var l2 = lat2.toRad();
-    console.log("current and stored latitudes in radians: " + l1 + ',' + l2);
+    // console.log("Found stored point " + lat2 + ',' + lon2);
+    var dLat = toRad(lat2-lat1);
+    // console.log("Latitude difference (radians): " + dLat);
+    var dLon = toRad(lon2-lon1);
+    // console.log("Longitude difference (radians): " + dLon);
+    var l1 = toRad(lat1);
+    var l2 = toRad(lat2);
+    // console.log("current and stored latitudes in radians: " + l1 + ',' + l2);
 
     var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
             Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(l1) * Math.cos(l2); 
     var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
     dist = Math.round(R * c);
-    console.log("Calculated dist " + dist);
+    // console.log("Calculated dist " + dist);
     
     var y = Math.sin(dLon) * Math.cos(l2);
     var x = Math.cos(l1)*Math.sin(l2) -
             Math.sin(l1)*Math.cos(l2)*Math.cos(dLon);
-    head = Math.round(Math.atan2(y, x).toDeg());
-    console.log("Calculated head " + head);
+    head = toDeg(Math.round(Math.atan2(y, x)));
+    // console.log("Calculated head " + head);
     msg = {"dist": dist,
            "head": head,
            "units": units};
     sendMessage(msg);
   }
   else {
-    console.log("Will not calculate: no lat2 and lon2: " + lat2 + ',' + lon2);
+    // console.log("Will not calculate: no lat2 and lon2: " + lat2 + ',' + lon2);
   }
 }
 
@@ -171,7 +161,7 @@ function locationError(error) {
 }
 
 function storeCurrentPosition() {
-  console.log("Attempting to store current position.");
+  // console.log("Attempting to store current position.");
   navigator.geolocation.getCurrentPosition(storeLocation, locationError, locationOptions);
 }
 
@@ -203,4 +193,10 @@ function startWatcher() {
   }, 5000);
   console.log("Started location watcher: " + locationWatcher);
   */
+}
+function toRad(num) {
+  return num * Math.PI / 180;  
+}
+function toDeg(num) {
+  return num * 180 / Math.PI;
 }
