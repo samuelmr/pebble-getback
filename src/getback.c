@@ -13,10 +13,14 @@ static TextLayer *calib_layer;
 int32_t distance = 0;
 int16_t heading = 0;
 int16_t orientation = 0;
+// update screen only when heading changes at least <sensitivity> degrees
+// this is overridden by settings
+int sensitivity = 1;
 static const uint32_t CMD_KEY = 0x1;
 static const uint32_t HEAD_KEY = 0x2;
 static const uint32_t DIST_KEY = 0x3;
 static const uint32_t UNITS_KEY = 0x4;
+static const uint32_t SENS_KEY = 0x5;
 static const char *set_cmd = "set";
 static const char *quit_cmd = "quit";
 static GPath *head_path;
@@ -33,6 +37,45 @@ const GPathInfo HEAD_PATH_POINTS = {
     {11,  -48},
   }
 };
+
+void compass_heading_handler(CompassHeadingData heading_data){
+  static char valid_buf[2];
+  switch (heading_data.compass_status) {
+    case CompassStatusDataInvalid:
+      snprintf(valid_buf, sizeof(valid_buf), "%s", "C");
+      return;
+    case CompassStatusCalibrating:
+      snprintf(valid_buf, sizeof(valid_buf), "%s", "F");
+      break;
+    case CompassStatusCalibrated:
+      snprintf(valid_buf, sizeof(valid_buf), "%s", "");
+  }
+  orientation = heading_data.true_heading;
+  layer_mark_dirty(head_layer);
+  text_layer_set_text(calib_layer, valid_buf);
+  int32_t nx = center.x + 63 * sin_lookup(orientation)/TRIG_MAX_RATIO;
+  int32_t ny = center.y - 63 * cos_lookup(orientation)/TRIG_MAX_RATIO;
+  layer_set_frame((Layer *) n_layer, GRect(nx - 9, ny - 9, 18, 18));
+  int32_t ex = center.x + 63 * sin_lookup(orientation + TRIG_MAX_ANGLE/4)/TRIG_MAX_RATIO;
+  int32_t ey = center.y - 63 * cos_lookup(orientation + TRIG_MAX_ANGLE/4)/TRIG_MAX_RATIO;
+  layer_set_frame((Layer *) e_layer, GRect(ex - 9, ey - 9, 18, 18));
+  int32_t sx = center.x + 63 * sin_lookup(orientation + TRIG_MAX_ANGLE/2)/TRIG_MAX_RATIO;
+  int32_t sy = center.y - 63 * cos_lookup(orientation + TRIG_MAX_ANGLE/2)/TRIG_MAX_RATIO;
+  layer_set_frame((Layer *) s_layer, GRect(sx - 9, sy - 9, 18, 18));
+  int32_t wx = center.x + 63 * sin_lookup(orientation + TRIG_MAX_ANGLE*3/4)/TRIG_MAX_RATIO;
+  int32_t wy = center.y - 63 * cos_lookup(orientation + TRIG_MAX_ANGLE*3/4)/TRIG_MAX_RATIO;
+  layer_set_frame((Layer *) w_layer, GRect(wx - 9, wy - 9, 18, 18));
+}
+
+static void head_layer_update_callback(Layer *layer, GContext *ctx) {
+  gpath_rotate_to(head_path, (TRIG_MAX_ANGLE / 360) * (heading + TRIGANGLE_TO_DEG(orientation)));
+  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_fill_circle(ctx, center, 77);
+  graphics_context_set_fill_color(ctx, GColorWhite);
+  gpath_draw_filled(ctx, head_path);
+  graphics_fill_circle(ctx, center, 49);
+  graphics_context_set_fill_color(ctx, GColorBlack);
+}
 
 static void reset_handler(ClickRecognizerRef recognizer, void *context) {
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Reset");
@@ -98,7 +141,7 @@ void in_received_handler(DictionaryIterator *iter, void *context) {
   Tuple *head_tuple = dict_find(iter, HEAD_KEY);
   if (head_tuple) {
     heading = head_tuple->value->int16;
-    // APP_LOG(APP_LOG_LEVEL_DEBUG, "Updated heading to %d", (int) heading);
+    // APP_LOG(APP_LOG_LEVEL_DEBUG, "Updated heading to %ld", heading);
     layer_mark_dirty(head_layer);
   }
   Tuple *units_tuple = dict_find(iter, UNITS_KEY);
@@ -127,54 +170,23 @@ void in_received_handler(DictionaryIterator *iter, void *context) {
       }
     }
   }
+  Tuple *sens_tuple = dict_find(iter, SENS_KEY);
+  if (sens_tuple) {
+    sensitivity = sens_tuple->value->int8;
+    compass_service_set_heading_filter(TRIG_MAX_ANGLE*sensitivity/360);
+    compass_service_unsubscribe();
+    compass_service_subscribe(&compass_heading_handler);
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Sensitivity: %d", sensitivity);
+  }
   static char dist_text[9];
   snprintf(dist_text, sizeof(dist_text), "%d", (int) distance);
   text_layer_set_text(dist_layer, dist_text);
   // APP_LOG(APP_LOG_LEVEL_DEBUG, "Distance updated: %d %s", (int) distance, text_layer_get_text(unit_layer));
 }
 
-void compass_heading_handler(CompassHeadingData heading_data){
-  static char valid_buf[2];
-  switch (heading_data.compass_status) {
-    case CompassStatusDataInvalid:
-      snprintf(valid_buf, sizeof(valid_buf), "%s", "C");
-      return;
-    case CompassStatusCalibrating:
-      snprintf(valid_buf, sizeof(valid_buf), "%s", "F");
-      break;
-    case CompassStatusCalibrated:
-      snprintf(valid_buf, sizeof(valid_buf), "%s", "");
-  }
-  orientation = heading_data.true_heading;
-  layer_mark_dirty(head_layer);
-  text_layer_set_text(calib_layer, valid_buf);
-  int32_t nx = center.x + 63 * sin_lookup(orientation)/TRIG_MAX_RATIO;
-  int32_t ny = center.y - 63 * cos_lookup(orientation)/TRIG_MAX_RATIO;
-  layer_set_frame((Layer *) n_layer, GRect(nx - 9, ny - 9, 18, 18));
-  int32_t ex = center.x + 63 * sin_lookup(orientation + TRIG_MAX_ANGLE/4)/TRIG_MAX_RATIO;
-  int32_t ey = center.y - 63 * cos_lookup(orientation + TRIG_MAX_ANGLE/4)/TRIG_MAX_RATIO;
-  layer_set_frame((Layer *) e_layer, GRect(ex - 9, ey - 9, 18, 18));
-  int32_t sx = center.x + 63 * sin_lookup(orientation + TRIG_MAX_ANGLE/2)/TRIG_MAX_RATIO;
-  int32_t sy = center.y - 63 * cos_lookup(orientation + TRIG_MAX_ANGLE/2)/TRIG_MAX_RATIO;
-  layer_set_frame((Layer *) s_layer, GRect(sx - 9, sy - 9, 18, 18));
-  int32_t wx = center.x + 63 * sin_lookup(orientation + TRIG_MAX_ANGLE*3/4)/TRIG_MAX_RATIO;
-  int32_t wy = center.y - 63 * cos_lookup(orientation + TRIG_MAX_ANGLE*3/4)/TRIG_MAX_RATIO;
-  layer_set_frame((Layer *) w_layer, GRect(wx - 9, wy - 9, 18, 18));
-}
-
-static void head_layer_update_callback(Layer *layer, GContext *ctx) {
-  gpath_rotate_to(head_path, (TRIG_MAX_ANGLE / 360) * (heading + TRIGANGLE_TO_DEG(orientation)));
-  graphics_context_set_fill_color(ctx, GColorBlack);
-  graphics_fill_circle(ctx, center, 77);
-  graphics_context_set_fill_color(ctx, GColorWhite);
-  gpath_draw_filled(ctx, head_path);
-  graphics_fill_circle(ctx, center, 49);
-  graphics_context_set_fill_color(ctx, GColorBlack);
-}
-
 void in_dropped_handler(AppMessageResult reason, void *context) {
-   // incoming message dropped
-  APP_LOG(APP_LOG_LEVEL_WARNING, "Could not handle message from watch: %d", reason);
+  // incoming message dropped
+  APP_LOG(APP_LOG_LEVEL_WARNING, "Could not handle message from phone: %d", reason);
 }
  
 static void click_config_provider(void *context) {
@@ -267,8 +279,7 @@ static void window_unload(Window *window) {
 }
 
 static void init(void) {
-  // update screen only when heading changes at least 3 degrees
-  compass_service_set_heading_filter(TRIG_MAX_ANGLE*3/360);
+  compass_service_set_heading_filter(TRIG_MAX_ANGLE*sensitivity/360);
   compass_service_subscribe(&compass_heading_handler);
   app_message_register_inbox_received(in_received_handler);
   app_message_register_inbox_dropped(in_dropped_handler);

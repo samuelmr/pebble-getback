@@ -1,32 +1,38 @@
 {
-    "appKeys": {
-        "cmd": 1,
-        "dist": 3,
-        "head": 2,
-        "units": 4
-    },
-    "capabilities": [
-        "location",
-        "configurable"
-    ],
-    "companyName": "Samuel Rinnetm\u00e4ki",
-    "longName": "Get Back",
-    "projectType": "native",
-    "resources": {
-        "media": [
-            {
-                "file": "images/icon28.png",
-                "menuIcon": true,
-                "name": "LOGO",
-                "type": "png"
-            }
-        ]
-    },
-    "shortName": "Get Back",
-    "uuid": "89f5b6e9-f87b-4b69-9d4e-f9f88de2f848",
-    "versionCode": 1,
-    "versionLabel": "2.2",
-    "watchapp": {
-        "watchface": false
-    }
+  "appKeys": {
+    "cmd": 1,
+    "dist": 3,
+    "head": 2,
+    "units": 4,
+    "sens": 5
+  },
+  "capabilities": [
+    "location",
+    "configurable"
+  ],
+  "companyName": "Samuel Rinnetm\u00e4ki",
+  "longName": "Get Back",
+  "projectType": "native",
+  "resources": {
+    "media": [
+      {
+        "file": "images/icon28.png",
+        "menuIcon": true,
+        "name": "LOGO",
+        "type": "png"
+      }
+    ]
+  },
+  "shortName": "Get Back",
+  "uuid": "89f5b6e9-f87b-4b69-9d4e-f9f88de2f848",
+  "versionCode": 3,
+  "versionLabel": "3.0",
+  "watchapp": {
+    "watchface": false
+  },
+  "targetPlatforms": [
+    "aplite",
+    "basalt"
+  ],
+  "sdkVersion": "3"
 }
