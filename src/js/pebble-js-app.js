@@ -8,6 +8,7 @@ var prevHead = 0;
 var prevDist = 0;
 var head = 0;
 var dist = 0;
+var token;
 var units = "metric";
 var sens = 5;
 var R = 6371000; // m
@@ -21,7 +22,7 @@ Pebble.addEventListener("ready", function(e) {
   lon2 = parseFloat(localStorage.getItem("lon2")) || null;
   interval = parseInt(localStorage.getItem("interval")) || 0;
   units = localStorage.getItem("units") || "metric";
-  sens = localStorage.getItem("sens") || 5;
+  sens = parseInt(localStorage.getItem("sens")) || 5;
   if ((lat2 === null) || (lon2 === null)) {
     storeCurrentPosition();
   }
